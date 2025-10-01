@@ -79,6 +79,10 @@ export function WaitlistForm() {
       }
 
       if (!response.ok) {
+        // Handle specific error cases
+        if (response.status === 409) {
+          throw new Error("This email is already registered for the waitlist!");
+        }
         throw new Error(
           (responseBody as { message?: string })?.message ||
             `Request failed with status: ${response.status}`

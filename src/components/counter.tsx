@@ -37,6 +37,11 @@ export function Counter() {
     };
 
     fetchCount();
+    
+    // Update counter every 30 seconds
+    const interval = setInterval(fetchCount, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   if (isLoading) {
