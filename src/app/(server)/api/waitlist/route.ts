@@ -1,4 +1,5 @@
-import { addToWaitlist } from "@/lib/redis";
+import { addToWaitlist, getWaitlistCount } from "@/lib/redis";
+import { notifyNewSignup } from "@/lib/notify";
 import arcjet, { validateEmail } from "@arcjet/next";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -62,6 +63,13 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       );
     }
+
+    // Send notification email (non-blocking)
+    const totalCount = await getWaitlistCount();
+    notifyNewSignup({ email, totalCount }).catch((error) => {
+      console.error("Failed to send notification:", error);
+      // Don't fail the request if notification fails
+    });
 
     return NextResponse.json(
       { success: true, message: "Successfully signed up to the waitlist!" },

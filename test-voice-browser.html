@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Coach Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #000;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #333;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #transcript {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            min-height: 50px;
+        }
+        #response {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 6px;
+            min-height: 50px;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            background: #fff3cd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Voice Coach Test</h1>
+        <p>Test the voice interface. Click "Start Listening" and speak.</p>
+        
+        <div>
+            <button id="startBtn" onclick="startListening()">Start Listening</button>
+            <button id="stopBtn" onclick="stopListening()" disabled>Stop</button>
+            <button onclick="speakResponse()">Test TTS</button>
+        </div>
+
+        <div class="status" id="status">Ready</div>
+
+        <div>
+            <h3>You said:</h3>
+            <div id="transcript">...</div>
+        </div>
+
+        <div>
+            <h3>AI Response:</h3>
+            <div id="response">...</div>
+        </div>
+    </div>
+
+    <script>
+        let recognition;
+        let isListening = false;
+
+        // Initialize speech recognition (Chrome/Edge)
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                isListening = true;
+                document.getElementById('status').textContent = '🎤 Listening...';
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('transcript').textContent = transcript;
+                
+                // Process the input (simplified - replace with your actual logic)
+                const response = processInput(transcript);
+                document.getElementById('response').textContent = response;
+                
+                // Speak the response
+                speak(response);
+            };
+
+            recognition.onerror = (event) => {
+                document.getElementById('status').textContent = 'Error: ' + event.error;
+                isListening = false;
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                document.getElementById('status').textContent = 'Stopped';
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+            };
+        } else {
+            document.getElementById('status').textContent = '❌ Speech recognition not supported. Use Chrome or Edge.';
+            document.getElementById('startBtn').disabled = true;
+        }
+
+        function startListening() {
+            if (recognition && !isListening) {
+                recognition.start();
+            }
+        }
+
+        function stopListening() {
+            if (recognition && isListening) {
+                recognition.stop();
+            }
+        }
+
+        function processInput(input) {
+            // Simple logic test - replace with your actual handler
+            const lower = input.toLowerCase();
+            
+            if (lower.includes("thing 1")) {
+                return "Got it. What's your Thing 1?";
+            }
+            if (lower.includes("overwhelmed")) {
+                return "Let me break this down for you... [Goblin Tools]";
+            }
+            if (lower.includes("anxious") || lower.includes("frustrated")) {
+                return "Let's talk through what's going on... [Therapy]";
+            }
+            if (lower.includes("motivation")) {
+                return "Here's a different way to think about it... [Self-Help]";
+            }
+            
+            return "How can I help you with your 2 things?";
+        }
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function speakResponse() {
+            const response = document.getElementById('response').textContent;
+            if (response && response !== '...') {
+                speak(response);
+            } else {
+                speak("Hello, what are your 2 things to focus on?");
+            }
+        }
+    </script>
+</body>
+</html>
+

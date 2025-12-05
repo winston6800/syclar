@@ -1,70 +1,50 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import * as motion from "motion/react-client";
 
 export function Counter() {
   const [count, setCount] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchCount = async () => {
-      setIsLoading(true);
-      setError(null);
+    async function fetchCount() {
       try {
         const response = await fetch("/api/waitlist/count");
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch count: ${response.status} ${response.statusText}`
-          );
-        }
         const data = await response.json();
-
-        if (typeof data.count !== "number") {
-          throw new Error("Invalid count received from API");
-        }
-
-        setCount(data.count);
-      } catch (err) {
-        console.error("Error fetching waitlist count:", err);
-        setError(
-          err instanceof Error ? err.message : "An unknown error occurred"
-        );
-        setCount(null);
-      } finally {
-        setIsLoading(false);
+        setCount(data.count || 0);
+      } catch (error) {
+        console.error("Error fetching waitlist count:", error);
+        setCount(0);
       }
-    };
+    }
 
     fetchCount();
-    
-    // Update counter every 30 seconds
+    // Refresh count every 30 seconds
     const interval = setInterval(fetchCount, 30000);
-    
     return () => clearInterval(interval);
   }, []);
 
-  if (isLoading) {
-    return <div className="h-6" aria-live="polite"></div>;
-  }
-
-  if (error) {
-    return null;
-  }
-
   if (count === null) {
-    return null;
+    return (
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-sm font-light text-neutral-500 dark:text-neutral-500"
+        aria-live="polite"
+      >
+        Loading...
+      </motion.p>
+    );
   }
 
   return (
     <motion.p
-      initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      transition={{ duration: 2, type: "spring" }}
-      className="text-sm text-muted-foreground"
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      className="text-sm font-light text-neutral-500 dark:text-neutral-500"
       aria-live="polite"
     >
-      Join <span className="font-bold">{count.toLocaleString()}</span>+ others
+      Join <span className="font-medium text-neutral-900 dark:text-neutral-100">{count.toLocaleString()}</span>+ others
       who signed up
     </motion.p>
   );

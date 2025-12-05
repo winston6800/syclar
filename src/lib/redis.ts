@@ -33,3 +33,31 @@ export async function getWaitlistCount(): Promise<number> {
     return 0;
   }
 }
+
+export async function getAllWaitlistEmails(): Promise<
+  Array<{ email: string; timestamp: string }>
+> {
+  try {
+    // Get all emails from the set
+    const emails = await redis.smembers("waitlist");
+    
+    // Get all timestamps
+    const timestamps = await redis.hgetall("waitlist:timestamps");
+    
+    // Combine emails with their timestamps
+    const emailsWithTimestamps = (emails as string[]).map((email) => ({
+      email,
+      timestamp: (timestamps as Record<string, string>)[email] || "",
+    }));
+    
+    // Sort by timestamp (newest first)
+    return emailsWithTimestamps.sort((a, b) => {
+      if (!a.timestamp) return 1;
+      if (!b.timestamp) return -1;
+      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    });
+  } catch (error) {
+    console.error("Error getting all waitlist emails:", error);
+    return [];
+  }
+}

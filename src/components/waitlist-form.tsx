@@ -109,10 +109,10 @@ export function WaitlistForm() {
     <Form {...form}>
       <motion.form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="relative flex w-full max-w-md flex-col gap-3 sm:flex-row"
-        initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
-        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-        transition={{ duration: 2, type: "spring" }}
+        className="relative flex w-full max-w-lg flex-col gap-3 sm:flex-row"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       >
         <FormField
           control={form.control}
@@ -124,25 +124,25 @@ export function WaitlistForm() {
                   placeholder="Enter your email"
                   type="email"
                   autoComplete="email"
-                  className="h-11 rounded-md"
+                  className="h-14 rounded-full border-neutral-300 bg-white/80 px-6 text-base backdrop-blur-xl transition-all focus:border-neutral-400 focus:bg-white focus:shadow-lg dark:border-neutral-700 dark:bg-neutral-900/80 dark:focus:border-neutral-600 dark:focus:bg-neutral-900"
                   aria-label="Email address for waitlist"
                   aria-invalid={!!form.formState.errors.email}
                   {...field}
                 />
               </FormControl>
-              <FormMessage className="absolute pt-1 text-xs text-red-600 dark:text-red-500" />
+              <FormMessage className="absolute left-0 right-0 top-full pt-2 text-xs text-red-600 dark:text-red-400" />
             </FormItem>
           )}
         />
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="h-11 shrink-0 rounded-md px-6 font-medium"
+          className="h-14 shrink-0 rounded-full bg-neutral-900 px-8 text-base font-medium text-white transition-all hover:bg-neutral-800 active:scale-[0.98] disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
           aria-live="polite"
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="animate-spin" />
+              <Loader2 className="size-4 animate-spin" />
               Joining...
             </>
           ) : (
