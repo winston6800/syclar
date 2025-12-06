@@ -17,8 +17,11 @@ export function AccomplishmentCalendar({
   const [editingDate, setEditingDate] = useState<string | null>(null);
   const [editText, setEditText] = useState<string>("");
 
+  const pad = (n: number) => n.toString().padStart(2, "0");
+
   const getTodayKey = () => {
-    return new Date().toISOString().split("T")[0];
+    const d = new Date();
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   };
 
   useEffect(() => {
@@ -31,6 +34,30 @@ export function AccomplishmentCalendar({
         console.error("Failed to load accomplishments:", e);
       }
     }
+
+    // Try to fetch server copy and prefer it if present
+    (async () => {
+      try {
+        const clientIdKey = "clientId";
+        let clientId = localStorage.getItem(clientIdKey);
+        if (!clientId && typeof crypto !== "undefined" && (crypto as any).randomUUID) {
+          const id = (crypto as any).randomUUID();
+          clientId = id;
+          localStorage.setItem(clientIdKey, id);
+        }
+        if (!clientId) return;
+
+        const res = await fetch(`/api/user/accomplishments?clientId=${encodeURIComponent(clientId)}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json?.success && json?.accomplishments && Object.keys(json.accomplishments).length > 0) {
+          setAccomplishments(json.accomplishments);
+          localStorage.setItem("dailyAccomplishments", JSON.stringify(json.accomplishments));
+        }
+      } catch (e) {
+        // Server unreachable — keep using localStorage
+      }
+    })();
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "dailyAccomplishments" && e.newValue) {
@@ -68,7 +95,8 @@ export function AccomplishmentCalendar({
   };
 
   const formatDateKey = (date: Date) => {
-    return date.toISOString().split("T")[0];
+    // Use local date components to avoid timezone shifts from toISOString
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   };
 
   const formatDateDisplay = (date: Date) => {
@@ -129,6 +157,28 @@ export function AccomplishmentCalendar({
       localStorage.setItem("dailyAccomplishments", JSON.stringify(updated));
       setEditingDate(null);
       setEditText("");
+
+      // Try to sync to server
+      (async () => {
+        try {
+          const clientIdKey = "clientId";
+          let clientId = localStorage.getItem(clientIdKey);
+          if (!clientId && typeof crypto !== "undefined" && (crypto as any).randomUUID) {
+            const id = (crypto as any).randomUUID();
+            clientId = id;
+            localStorage.setItem(clientIdKey, id);
+          }
+          if (!clientId) return;
+
+          await fetch("/api/user/accomplishments", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ clientId, accomplishments: updated }),
+          });
+        } catch (e) {
+          console.debug("Could not sync edited accomplishment to server", e);
+        }
+      })();
     }
   };
 
@@ -142,6 +192,27 @@ export function AccomplishmentCalendar({
     delete updated[dateKey];
     setAccomplishments(updated);
     localStorage.setItem("dailyAccomplishments", JSON.stringify(updated));
+    // Try to sync deletion to server
+    (async () => {
+      try {
+        const clientIdKey = "clientId";
+        let clientId = localStorage.getItem(clientIdKey);
+        if (!clientId && typeof crypto !== "undefined" && (crypto as any).randomUUID) {
+          const id = (crypto as any).randomUUID();
+          clientId = id;
+          localStorage.setItem(clientIdKey, id);
+        }
+        if (!clientId) return;
+
+        await fetch("/api/user/accomplishments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ clientId, accomplishments: updated }),
+        });
+      } catch (e) {
+        console.debug("Could not sync deletion to server", e);
+      }
+    })();
   };
 
   if (!isOpen) return null;
@@ -252,7 +323,7 @@ export function AccomplishmentCalendar({
               {Object.entries(accomplishments)
                 .sort((a, b) => b[0].localeCompare(a[0])) // Sort by date, newest first
                 .map(([dateKey, accomplishment]) => {
-                  const date = new Date(dateKey);
+                  const date = parseDateKey(dateKey);
                   const isToday = dateKey === getTodayKey();
                   return (
                     <div
