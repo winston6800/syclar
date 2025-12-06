@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { HeroRank, getInitialRank, deductPointsForUnproductiveSite, formatRank } from "./hero-rank";
+import { HeroRank, getInitialRank, deductPointsForUnproductiveSite, addPointsForWorkCompleted, formatRank } from "./hero-rank";
 
 // Allowance spending rate: 0.10 per 5 minutes (0.02 per minute)
 const ALLOWANCE_COST_PER_MINUTE = 0.02;
@@ -175,6 +175,11 @@ export const useScreentimeTracker = (options?: UseScreentimeTrackerOptions) => {
     setCurrentRank((rank) => deductPointsForUnproductiveSite(rank, minutes));
   }, []);
 
+  // Add points for completing work
+  const addPoints = useCallback((points: number = 10) => {
+    setCurrentRank((rank) => addPointsForWorkCompleted(rank, points));
+  }, []);
+
   return {
     currentRank,
     rankString: formatRank(currentRank),
@@ -186,6 +191,7 @@ export const useScreentimeTracker = (options?: UseScreentimeTrackerOptions) => {
     startTracking,
     stopTracking,
     deductPoints,
+    addPoints,
   };
 };
 

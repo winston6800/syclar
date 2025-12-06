@@ -419,6 +419,34 @@ Keep it:
 
 ---
 
+## Strategy Timeline Feature
+
+### Logic
+- AI estimates total weeks for pillar based on milestones (1-4 weeks per milestone)
+- Auto-calculates completion date: today + estimated weeks
+- Distributes milestones across weeks (sequential, accounts for dependencies)
+- Updates ETA dynamically as milestones complete
+- Shows velocity: ahead/on-track/behind schedule
+
+### Data Model
+```
+Pillar {
+  estimatedWeeks: number
+  estimatedCompletion: Date
+  milestoneSchedule: { week: number, milestoneId: string }[]
+}
+Stone {
+  estimatedWeeks: number
+  scheduledWeek: number
+}
+```
+
+### UI
+- Vertical pillar timeline: foundation (goal) → milestones (blocks) → completion (top)
+- Shows ETA prominently: "🎯 Jan 7, 2026 (5 weeks)"
+- Progress indicators: completed (green), current (blue), future (gray)
+- Velocity status: ahead/on-track/behind with time saved/over
+
 ## Open Questions
 
 1. **How to track progress?** Self-reported? Inferred from conversation? Manual?

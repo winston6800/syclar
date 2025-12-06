@@ -40,6 +40,7 @@ export default function TacticalPage() {
     isProtected,
     startTracking,
     stopTracking,
+    addPoints,
   } = useScreentimeTracker({
     allowance,
     onAllowanceChange: setAllowance,
@@ -329,6 +330,9 @@ export default function TacticalPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ stats: updatedStats }),
         }).catch(console.error);
+        
+        // Add points to hero rank for completing work
+        addPoints(10); // 10 points = 1 rank change
       }
       
       return updated;

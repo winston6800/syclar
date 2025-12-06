@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import type { Pillar, Stone } from "./types";
 import { MilestoneList } from "./milestone-list";
+import { PillarTimeline } from "./pillar-timeline";
 
 type PillarCardProps = {
   pillar: Pillar;
@@ -95,23 +96,12 @@ export function PillarCard({
         </div>
       </div>
 
-      {/* Progress Indicator */}
+      {/* Timeline & Progress */}
       {isSelected && (
         <>
-          <div className="mb-6">
-            <div className="mb-2 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
-              <span>Progress</span>
-              <span className="font-medium">
-                {completedCount} / {totalCount}
-              </span>
-            </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
+          {pillar.estimatedCompletion && (
+            <PillarTimeline pillar={pillar} stones={stones} />
+          )}
 
           {/* Milestones */}
           <MilestoneList

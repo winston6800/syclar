@@ -16,7 +16,11 @@ export default function StrategyPage() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          return parsed.length > 0 ? parsed : [{ id: "1", name: "", winDefinition: "" }];
+          const deserialized = parsed.map((p: any) => ({
+            ...p,
+            estimatedCompletion: p.estimatedCompletion ? new Date(p.estimatedCompletion) : undefined,
+          }));
+          return deserialized.length > 0 ? deserialized : [{ id: "1", name: "", winDefinition: "" }];
         } catch (e) {
           console.error("Failed to load pillars:", e);
         }
@@ -49,14 +53,38 @@ export default function StrategyPage() {
   });
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Sync pillars to localStorage
+  // Sync pillars to localStorage (with date serialization)
   useEffect(() => {
-    localStorage.setItem("strategyPillars", JSON.stringify(pillars));
+    const serialized = pillars.map((p) => ({
+      ...p,
+      estimatedCompletion: p.estimatedCompletion ? p.estimatedCompletion.toISOString() : undefined,
+    }));
+    localStorage.setItem("strategyPillars", JSON.stringify(serialized));
   }, [pillars]);
 
   // Sync stones to localStorage for tactical page
   useEffect(() => {
     localStorage.setItem("strategyStones", JSON.stringify(stones));
+  }, [stones]);
+
+  // Recalculate timeline when stones change
+  useEffect(() => {
+    setPillars((prevPillars) => {
+      return prevPillars.map((pillar) => {
+        const pillarStones = stones.filter((s) => s.pillarId === pillar.id);
+        if (pillarStones.length > 0 && pillarStones.some((s) => s.estimatedWeeks)) {
+          const incompleteStones = pillarStones.filter((s) => !s.completed);
+          const remainingWeeks = incompleteStones.reduce((sum, s) => sum + (s.estimatedWeeks || 2), 0);
+          
+          if (remainingWeeks > 0) {
+            const completionDate = new Date();
+            completionDate.setDate(completionDate.getDate() + (remainingWeeks * 7));
+            return { ...pillar, estimatedWeeks: remainingWeeks, estimatedCompletion: completionDate };
+          }
+        }
+        return pillar;
+      });
+    });
   }, [stones]);
 
   // Sync selected pillar
@@ -148,13 +176,41 @@ export default function StrategyPage() {
 
       const data = await response.json();
       if (data.success && data.milestones) {
-        const newStones: Stone[] = data.milestones.map((name: string) => ({
-          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-          pillarId: selectedPillarId,
-          name,
-          completed: false,
-        }));
-        setStones((prev) => [...prev, ...newStones]);
+        const newStones: Stone[] = data.milestones.map((m: any, index: number) => {
+          const milestone = typeof m === 'string' ? { name: m, estimatedWeeks: 2 } : m;
+          return {
+            id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            pillarId: selectedPillarId,
+            name: milestone.name,
+            completed: false,
+            estimatedWeeks: milestone.estimatedWeeks || 2,
+            scheduledWeek: index + 1, // Will be recalculated
+          };
+        });
+        
+        // Calculate timeline
+        const totalWeeks = newStones.reduce((sum, s) => sum + (s.estimatedWeeks || 2), 0);
+        const completionDate = new Date();
+        completionDate.setDate(completionDate.getDate() + (totalWeeks * 7));
+        
+        // Schedule milestones across weeks
+        let currentWeek = 1;
+        const scheduledStones = newStones.map((stone) => {
+          const week = currentWeek;
+          currentWeek += stone.estimatedWeeks || 2;
+          return { ...stone, scheduledWeek: week };
+        });
+        
+        // Update pillar with timeline
+        setPillars((prev) =>
+          prev.map((p) =>
+            p.id === selectedPillarId
+              ? { ...p, estimatedWeeks: totalWeeks, estimatedCompletion: completionDate }
+              : p
+          )
+        );
+        
+        setStones((prev) => [...prev, ...scheduledStones]);
       }
     } catch (error) {
       console.error("Failed to generate milestones:", error);

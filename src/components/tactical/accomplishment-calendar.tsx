@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, Star, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Calendar, Star, ChevronLeft, ChevronRight, X, Edit2, Trash2 } from "lucide-react";
 
 type AccomplishmentCalendarProps = {
   isOpen: boolean;
@@ -14,6 +14,8 @@ export function AccomplishmentCalendar({
 }: AccomplishmentCalendarProps) {
   const [accomplishments, setAccomplishments] = useState<Record<string, string>>({});
   const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const [editingDate, setEditingDate] = useState<string | null>(null);
+  const [editText, setEditText] = useState<string>("");
 
   const getTodayKey = () => {
     return new Date().toISOString().split("T")[0];
@@ -77,6 +79,12 @@ export function AccomplishmentCalendar({
     });
   };
 
+  const parseDateKey = (dateKey: string): Date => {
+    // dateKey is in format "YYYY-MM-DD"
+    const [year, month, day] = dateKey.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   const navigateMonth = (direction: "prev" | "next") => {
     setCalendarMonth((prev) => {
       const newDate = new Date(prev);
@@ -87,6 +95,53 @@ export function AccomplishmentCalendar({
       }
       return newDate;
     });
+  };
+
+  const startEditing = (dateKey: string) => {
+    // Ensure we have the latest data from localStorage
+    const saved = localStorage.getItem("dailyAccomplishments");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setAccomplishments(parsed);
+        setEditingDate(dateKey);
+        setEditText(parsed[dateKey] || "");
+      } catch (e) {
+        console.error("Failed to load accomplishment:", e);
+        setEditingDate(dateKey);
+        setEditText(accomplishments[dateKey] || "");
+      }
+    } else {
+      setEditingDate(dateKey);
+      setEditText(accomplishments[dateKey] || "");
+    }
+  };
+
+  const saveEdit = () => {
+    if (editingDate) {
+      const updated = { ...accomplishments };
+      if (editText.trim()) {
+        updated[editingDate] = editText.trim();
+      } else {
+        delete updated[editingDate];
+      }
+      setAccomplishments(updated);
+      localStorage.setItem("dailyAccomplishments", JSON.stringify(updated));
+      setEditingDate(null);
+      setEditText("");
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingDate(null);
+    setEditText("");
+  };
+
+  const deleteAccomplishment = (dateKey: string) => {
+    const updated = { ...accomplishments };
+    delete updated[dateKey];
+    setAccomplishments(updated);
+    localStorage.setItem("dailyAccomplishments", JSON.stringify(updated));
   };
 
   if (!isOpen) return null;
@@ -164,13 +219,7 @@ export function AccomplishmentCalendar({
                 <button
                   key={dateKey}
                   type="button"
-                  onClick={() => {
-                    // Could show accomplishment for this date
-                    const acc = accomplishments[dateKey];
-                    if (acc) {
-                      alert(`${formatDateDisplay(date)}\n\n${acc}`);
-                    }
-                  }}
+                  onClick={() => startEditing(dateKey)}
                   className={`relative rounded-lg p-2 text-sm transition-colors ${
                     isToday
                       ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
@@ -214,16 +263,36 @@ export function AccomplishmentCalendar({
                           : "border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900/80"
                       }`}
                     >
-                      <div className="mb-1 flex items-center gap-2">
-                        <Calendar className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
-                        <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
-                          {formatDateDisplay(date)}
-                          {isToday && (
-                            <span className="ml-2 rounded-full bg-yellow-500 px-2 py-0.5 text-[10px] text-white">
-                              Today
-                            </span>
-                          )}
-                        </span>
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
+                          <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
+                            {formatDateDisplay(date)}
+                            {isToday && (
+                              <span className="ml-2 rounded-full bg-yellow-500 px-2 py-0.5 text-[10px] text-white">
+                                Today
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => startEditing(dateKey)}
+                            className="rounded p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
+                            title="Edit"
+                          >
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteAccomplishment(dateKey)}
+                            className="rounded p-1 text-neutral-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
                       <p className="text-sm text-neutral-800 dark:text-neutral-200">
                         {accomplishment}
@@ -234,9 +303,74 @@ export function AccomplishmentCalendar({
             </div>
           )}
         </div>
+
+        {/* Edit Modal */}
+        {editingDate && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-3xl bg-black/50 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                    {formatDateDisplay(parseDateKey(editingDate))}
+                  </h3>
+                  <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                    Most proud of accomplishment
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  className="rounded-full p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                placeholder="What were you most proud of on this day?"
+                rows={4}
+                autoFocus
+                className="mb-4 w-full resize-none rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-0 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-200"
+              />
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (editingDate) {
+                      deleteAccomplishment(editingDate);
+                      cancelEdit();
+                    }
+                  }}
+                  className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
+                >
+                  <Trash2 className="mr-2 inline h-4 w-4" />
+                  Delete
+                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={cancelEdit}
+                    className="rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-300 dark:hover:bg-neutral-900"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={saveEdit}
+                    className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
 
 

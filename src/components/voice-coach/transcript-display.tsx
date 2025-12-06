@@ -36,3 +36,4 @@ export function TranscriptDisplay({ transcript, response }: TranscriptDisplayPro
 }
 
 
+

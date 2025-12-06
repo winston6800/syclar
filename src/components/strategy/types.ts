@@ -2,6 +2,8 @@ export type Pillar = {
   id: string;
   name: string;
   winDefinition: string;
+  estimatedWeeks?: number;
+  estimatedCompletion?: Date;
 };
 
 export type Stone = {
@@ -9,6 +11,8 @@ export type Stone = {
   pillarId: string;
   name: string;
   completed: boolean;
+  estimatedWeeks?: number;
+  scheduledWeek?: number;
 };
 
 

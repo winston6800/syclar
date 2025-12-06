@@ -18,16 +18,15 @@ export async function POST(request: NextRequest) {
     if (!apiKey) {
       // Mock response for development
       const mockMilestones = [
-        `Validate ${pillarName.toLowerCase()}`,
-        `Build MVP for ${pillarName.toLowerCase()}`,
-        `Launch ${pillarName.toLowerCase()}`,
-        `Get first users for ${pillarName.toLowerCase()}`,
-        `Scale ${pillarName.toLowerCase()}`,
+        { name: `Validate ${pillarName.toLowerCase()}`, estimatedWeeks: 1 },
+        { name: `Build MVP for ${pillarName.toLowerCase()}`, estimatedWeeks: 3 },
+        { name: `Launch ${pillarName.toLowerCase()}`, estimatedWeeks: 1 },
+        { name: `Get first users for ${pillarName.toLowerCase()}`, estimatedWeeks: 2 },
       ];
       
       return NextResponse.json({
         success: true,
-        milestones: mockMilestones.slice(0, 4), // Return 4 milestones
+        milestones: mockMilestones,
       });
     }
 
@@ -43,17 +42,19 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: "system",
-            content: `You are a productivity coach for founders. Generate 4-5 concrete milestones (stones) that build toward a goal. Each milestone should be:
+            content: `You are a productivity coach for founders in 2025. Generate 4-5 concrete milestones that build toward a goal. Each milestone should be:
 - Specific and actionable
 - Sequential (build on each other)
 - Achievable in 1-4 weeks
 - Clear when complete
+- Account for modern AI tools (GitHub Copilot, Cursor, no-code platforms)
 
-Return ONLY a JSON array of milestone strings, nothing else.`,
+Return JSON object with "milestones" array. Each milestone is {name: string, estimatedWeeks: number}.
+Estimated weeks should be realistic for 2025 (1-4 weeks per milestone).`,
           },
           {
             role: "user",
-            content: `Pillar: ${pillarName}\nWin Definition: ${winDefinition}\n\nGenerate 4-5 milestones (stones) that build this pillar. Return as JSON array.`,
+            content: `Pillar: ${pillarName}\nWin Definition: ${winDefinition}\n\nGenerate 4-5 milestones with time estimates. Return as JSON: {"milestones": [{"name": "...", "estimatedWeeks": 2}, ...]}`,
           },
         ],
         response_format: { type: "json_object" },
@@ -67,7 +68,17 @@ Return ONLY a JSON array of milestone strings, nothing else.`,
 
     const data = await response.json();
     const content = JSON.parse(data.choices[0].message.content);
-    const milestones = content.milestones || content.stones || [];
+    let milestones = content.milestones || content.stones || [];
+    
+    // Ensure milestones have estimatedWeeks
+    if (Array.isArray(milestones)) {
+      milestones = milestones.map((m: any) => {
+        if (typeof m === 'string') {
+          return { name: m, estimatedWeeks: 2 }; // Default 2 weeks
+        }
+        return { name: m.name || m, estimatedWeeks: m.estimatedWeeks || 2 };
+      });
+    }
 
     return NextResponse.json({
       success: true,

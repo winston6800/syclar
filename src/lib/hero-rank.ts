@@ -116,6 +116,25 @@ export const deductPointsForUnproductiveSite = (
   return newRank;
 };
 
+// Add points for completing work (task completion)
+export const addPointsForWorkCompleted = (
+  currentRank: HeroRank,
+  pointsToAdd: number = 10
+): HeroRank => {
+  // Add points for completing work (default: 10 points = 1 rank change)
+  const newPoints = currentRank.points + pointsToAdd;
+  
+  // Calculate new rank from updated points
+  const newRank = calculateRankFromPoints(newPoints);
+  
+  // Ensure rank never goes above ceiling
+  if (newRank.class === "S" && newRank.number < 1) {
+    newRank.number = 1;
+  }
+  
+  return newRank;
+};
+
 // Format rank as string
 export const formatRank = (rank: HeroRank): string => {
   return `${rank.class} class Rank #${rank.number}`;

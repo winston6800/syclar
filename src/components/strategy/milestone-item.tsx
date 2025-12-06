@@ -62,3 +62,4 @@ export function MilestoneItem({ stone, onClick, onRemove }: MilestoneItemProps) 
 }
 
 
+
