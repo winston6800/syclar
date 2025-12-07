@@ -56,6 +56,12 @@ export default function RootLayout({
                 >
                   Tactical
                 </Link>
+                <Link
+                  href="/story"
+                  className="rounded-full px-3 py-1 text-[11px] font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                >
+                  Story
+                </Link>
               </div>
             </div>
             {children}

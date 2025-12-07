@@ -130,12 +130,41 @@
   }
 }
 
+/* Story animations */
+@keyframes story-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes story-success {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 .cycle-spin {
   animation: cycle-spin 2s linear infinite;
 }
 
 .subtask-focused {
   animation: pulse-ring 2s infinite;
+}
+
+.story-fade-in {
+  animation: story-fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.story-success {
+  animation: story-success 0.6s ease-in-out;
 }
 
 @layer base {
