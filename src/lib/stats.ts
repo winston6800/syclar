@@ -9,6 +9,10 @@ export type UserStats = {
   longestStreak: number;
   lastActivityDate: string; // ISO date
   createdAt: string; // ISO date
+  // Aggregates for time-saved metrics
+  totalEstimatedMinutes?: number;
+  totalActualMinutes?: number;
+  totalTimeSaved?: number;
 };
 
 export type AggregatedStats = {
@@ -89,6 +93,9 @@ export function initializeUserStats(): UserStats {
     longestStreak: 0,
     lastActivityDate: now,
     createdAt: now,
+    totalEstimatedMinutes: 0,
+    totalActualMinutes: 0,
+    totalTimeSaved: 0,
   };
   
   saveUserStats(stats);
@@ -96,7 +103,7 @@ export function initializeUserStats(): UserStats {
 }
 
 // Record a completed cycle (task completion)
-export function recordCycle(): UserStats {
+export function recordCycle(data?: { estimatedMinutes?: number; actualMinutes?: number; timeSaved?: number }): UserStats {
   const stats = initializeUserStats();
   const today = new Date().toISOString().split("T")[0];
   const lastDate = stats.lastActivityDate.split("T")[0];
@@ -126,6 +133,9 @@ export function recordCycle(): UserStats {
     currentStreak,
     longestStreak: Math.max(stats.longestStreak, currentStreak),
     lastActivityDate: new Date().toISOString(),
+    totalEstimatedMinutes: (stats.totalEstimatedMinutes || 0) + (data?.estimatedMinutes || 0),
+    totalActualMinutes: (stats.totalActualMinutes || 0) + (data?.actualMinutes || 0),
+    totalTimeSaved: (stats.totalTimeSaved || 0) + (data?.timeSaved || 0),
   };
   
   saveUserStats(updated);

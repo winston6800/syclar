@@ -111,7 +111,17 @@ export function HeroRankDisplay({
             <div className="rounded-lg bg-neutral-50 px-3 py-2 dark:bg-neutral-950/50">
               <div className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
                 {rankUpInfo.pointsNeeded > 0 && (
-                  <span>Need <span className="font-semibold text-neutral-700 dark:text-neutral-300">{rankUpInfo.pointsNeeded}</span> more points to rank up</span>
+                  <div className="space-y-2">
+                    <div className="h-2 w-full rounded-full bg-neutral-200 dark:bg-neutral-800">
+                      <div
+                        className="h-2 rounded-full bg-emerald-400"
+                        style={{ width: `${Math.round((rankUpInfo.progress || 0) * 100)}%` }}
+                      />
+                    </div>
+                    <div>
+                      Need <span className="font-semibold text-neutral-700 dark:text-neutral-300">{rankUpInfo.pointsNeeded}</span> more points to rank up ({Math.round((rankUpInfo.progress || 0) * 100)}%)
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

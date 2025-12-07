@@ -16,9 +16,10 @@ type TaskItemProps = {
   onResumeFocus: () => void;
   onStopFocus: () => void;
   onRemove: () => void;
-  onBreakDown: () => void;
+  // onBreakDown removed (AI feature disabled)
   onToggleSubtask: (subtaskId: string) => void;
   onAddSubtask: (subtaskLabel: string) => void;
+  onRemoveSubtask?: (subtaskId: string) => void;
   formatTime: (seconds: number) => string;
   formatMinutes: (minutes: number) => string;
 };
@@ -33,9 +34,9 @@ export function TaskItem({
   onResumeFocus,
   onStopFocus,
   onRemove,
-  onBreakDown,
   onToggleSubtask,
   onAddSubtask,
+  onRemoveSubtask,
   formatTime,
   formatMinutes,
 }: TaskItemProps) {
@@ -199,6 +200,7 @@ export function TaskItem({
               <SubtaskList
                 subtasks={task.subtasks}
                 onToggle={onToggleSubtask}
+                onRemove={onRemoveSubtask}
               />
             </div>
           )}
@@ -255,29 +257,7 @@ export function TaskItem({
             </div>
           )}
 
-          {/* AI breakdown button */}
-          {!task.completed && task.subtasks.length === 0 && !isAddingSubtask && (
-            <div className="mt-2 pl-6" onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                onClick={onBreakDown}
-                disabled={isBreakingDown}
-                className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-200 disabled:opacity-50 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-              >
-                {isBreakingDown ? (
-                  <>
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    Breaking down...
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="h-3 w-3" />
-                    AI Break Down
-                  </>
-                )}
-              </button>
-            </div>
-          )}
+                  {/* AI feature removed */}
         </div>
       </div>
     </div>

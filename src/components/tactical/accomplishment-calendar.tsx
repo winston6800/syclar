@@ -35,30 +35,6 @@ export function AccomplishmentCalendar({
       }
     }
 
-    // Try to fetch server copy and prefer it if present
-    (async () => {
-      try {
-        const clientIdKey = "clientId";
-        let clientId = localStorage.getItem(clientIdKey);
-        if (!clientId && typeof crypto !== "undefined" && (crypto as any).randomUUID) {
-          const id = (crypto as any).randomUUID();
-          clientId = id;
-          localStorage.setItem(clientIdKey, id);
-        }
-        if (!clientId) return;
-
-        const res = await fetch(`/api/user/accomplishments?clientId=${encodeURIComponent(clientId)}`);
-        if (!res.ok) return;
-        const json = await res.json();
-        if (json?.success && json?.accomplishments && Object.keys(json.accomplishments).length > 0) {
-          setAccomplishments(json.accomplishments);
-          localStorage.setItem("dailyAccomplishments", JSON.stringify(json.accomplishments));
-        }
-      } catch (e) {
-        // Server unreachable — keep using localStorage
-      }
-    })();
-
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "dailyAccomplishments" && e.newValue) {
         try {
@@ -157,28 +133,6 @@ export function AccomplishmentCalendar({
       localStorage.setItem("dailyAccomplishments", JSON.stringify(updated));
       setEditingDate(null);
       setEditText("");
-
-      // Try to sync to server
-      (async () => {
-        try {
-          const clientIdKey = "clientId";
-          let clientId = localStorage.getItem(clientIdKey);
-          if (!clientId && typeof crypto !== "undefined" && (crypto as any).randomUUID) {
-            const id = (crypto as any).randomUUID();
-            clientId = id;
-            localStorage.setItem(clientIdKey, id);
-          }
-          if (!clientId) return;
-
-          await fetch("/api/user/accomplishments", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ clientId, accomplishments: updated }),
-          });
-        } catch (e) {
-          console.debug("Could not sync edited accomplishment to server", e);
-        }
-      })();
     }
   };
 
@@ -192,27 +146,6 @@ export function AccomplishmentCalendar({
     delete updated[dateKey];
     setAccomplishments(updated);
     localStorage.setItem("dailyAccomplishments", JSON.stringify(updated));
-    // Try to sync deletion to server
-    (async () => {
-      try {
-        const clientIdKey = "clientId";
-        let clientId = localStorage.getItem(clientIdKey);
-        if (!clientId && typeof crypto !== "undefined" && (crypto as any).randomUUID) {
-          const id = (crypto as any).randomUUID();
-          clientId = id;
-          localStorage.setItem(clientIdKey, id);
-        }
-        if (!clientId) return;
-
-        await fetch("/api/user/accomplishments", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ clientId, accomplishments: updated }),
-        });
-      } catch (e) {
-        console.debug("Could not sync deletion to server", e);
-      }
-    })();
   };
 
   if (!isOpen) return null;

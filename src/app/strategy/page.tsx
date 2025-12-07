@@ -126,9 +126,24 @@ export default function StrategyPage() {
   const handleStoneClick = (stone: Stone) => {
     if (stone.completed) return;
     
+    // Prevent starting another stone if one is already in progress
+    try {
+      const saved = localStorage.getItem("strategyStones");
+      if (saved) {
+        const allStones: Stone[] = JSON.parse(saved);
+        const active = allStones.find((s) => s.inProgress);
+        if (active) {
+          alert("You already have a stone in progress. Finish or stop it before starting another.");
+          return;
+        }
+      }
+    } catch (e) {
+      // ignore parse errors
+    }
+
     // Store stone to be picked up by tactical page
     localStorage.setItem("pendingStone", JSON.stringify(stone));
-    
+
     // Navigate to tactical page
     router.push("/tactical");
   };

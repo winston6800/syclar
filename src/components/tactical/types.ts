@@ -3,6 +3,8 @@ export type Subtask = {
   label: string;
   done: boolean;
   estimatedMinutes?: number;
+  source?: "ai" | "user";
+  note?: string;
 };
 
 export type Task = {
@@ -11,6 +13,9 @@ export type Task = {
   subtasks: Subtask[];
   completed: boolean;
   timeSpent: number; // in minutes
+  estimatedMinutes?: number; // task-level ETA in minutes
+  successCriteria?: string;
+  timeSaved?: number; // minutes saved when completed
 };
 
 export type FocusSession = {

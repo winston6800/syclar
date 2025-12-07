@@ -41,21 +41,21 @@ export function GamificationPanel() {
         console.error("Failed to load comparison:", error);
       }
 
-      // Get trophies
-      try {
-        const trophyRes = await fetch("/api/stats/trophies", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stats: userStats }),
-        });
-        const trophyData = await trophyRes.json();
-        if (trophyData.success) {
-          setTrophies(trophyData.trophies);
-          setTotalTrophies(trophyData.totalTrophies || 15);
-        }
-      } catch (error) {
-        console.error("Failed to load trophies:", error);
-      }
+      // Get trophies — DISABLED: expensive API call, feature not used
+      // try {
+      //   const trophyRes = await fetch("/api/stats/trophies", {
+      //     method: "POST",
+      //     headers: { "Content-Type": "application/json" },
+      //     body: JSON.stringify({ stats: userStats }),
+      //   });
+      //   const trophyData = await trophyRes.json();
+      //   if (trophyData.success) {
+      //     setTrophies(trophyData.trophies);
+      //     setTotalTrophies(trophyData.totalTrophies || 15);
+      //   }
+      // } catch (error) {
+      //   console.error("Failed to load trophies:", error);
+      // }
 
       setIsLoading(false);
     };

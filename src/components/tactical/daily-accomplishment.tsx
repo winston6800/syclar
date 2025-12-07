@@ -34,34 +34,6 @@ export function DailyAccomplishment({ onOpenCalendar }: DailyAccomplishmentProps
       }
     }
 
-    // Try to fetch server copy and prefer it if present
-    (async () => {
-      try {
-        const clientIdKey = "clientId";
-        let clientId = localStorage.getItem(clientIdKey);
-        if (!clientId && typeof crypto !== "undefined" && (crypto as any).randomUUID) {
-          const id = (crypto as any).randomUUID();
-          clientId = id;
-          localStorage.setItem(clientIdKey, id);
-        }
-        if (!clientId) return;
-
-        const res = await fetch(`/api/user/accomplishments?clientId=${encodeURIComponent(clientId)}`);
-        if (!res.ok) return;
-        const json = await res.json();
-        if (json?.success && json?.accomplishments && Object.keys(json.accomplishments).length > 0) {
-          setAccomplishments(json.accomplishments);
-          localStorage.setItem("dailyAccomplishments", JSON.stringify(json.accomplishments));
-          if (json.accomplishments[todayKey]) {
-            setDailyAccomplishment(json.accomplishments[todayKey]);
-          }
-        }
-      } catch (e) {
-        // If server is unreachable, we keep using localStorage
-        // console.debug("Could not fetch server accomplishments", e);
-      }
-    })();
-
     // Listen for storage changes (when edited in another tab/window)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "dailyAccomplishments" && e.newValue) {
@@ -82,33 +54,12 @@ export function DailyAccomplishment({ onOpenCalendar }: DailyAccomplishmentProps
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  // Save accomplishment (persist locally and try to sync to server)
-  const saveAccomplishment = async () => {
+  // Save accomplishment
+  const saveAccomplishment = () => {
     const todayKey = getTodayKey();
     const updated = { ...accomplishments, [todayKey]: dailyAccomplishment };
     setAccomplishments(updated);
     localStorage.setItem("dailyAccomplishments", JSON.stringify(updated));
-
-    // Try to sync to server
-    try {
-      const clientIdKey = "clientId";
-      let clientId = localStorage.getItem(clientIdKey);
-      if (!clientId && typeof crypto !== "undefined" && (crypto as any).randomUUID) {
-        const id = (crypto as any).randomUUID();
-        clientId = id;
-        localStorage.setItem(clientIdKey, id);
-      }
-      if (!clientId) return;
-
-      await fetch("/api/user/accomplishments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId, accomplishments: updated }),
-      });
-    } catch (e) {
-      // Fail silently — local copy remains authoritative until next sync
-      console.debug("Could not sync accomplishments to server", e);
-    }
   };
 
   return (
@@ -189,26 +140,6 @@ export function DailyAccomplishment({ onOpenCalendar }: DailyAccomplishmentProps
                   setAccomplishments(updated);
                   localStorage.setItem("dailyAccomplishments", JSON.stringify(updated));
                   setIsEditingAccomplishment(false);
-                  // Try to sync deletion to server
-                  (async () => {
-                    try {
-                      const clientIdKey = "clientId";
-                      let clientId = localStorage.getItem(clientIdKey);
-                      if (!clientId && typeof crypto !== "undefined" && (crypto as any).randomUUID) {
-                        const id = (crypto as any).randomUUID();
-                        clientId = id;
-                        localStorage.setItem(clientIdKey, id);
-                      }
-                      if (!clientId) return;
-                      await fetch("/api/user/accomplishments", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ clientId, accomplishments: updated }),
-                      });
-                    } catch (e) {
-                      console.debug("Could not sync deletion to server", e);
-                    }
-                  })();
                 }}
                 className="text-[10px] text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
               >

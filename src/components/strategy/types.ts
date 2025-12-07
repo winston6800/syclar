@@ -13,6 +13,7 @@ export type Stone = {
   completed: boolean;
   estimatedWeeks?: number;
   scheduledWeek?: number;
+  inProgress?: boolean; // whether this stone is currently being worked on (max 1)
 };
 
 

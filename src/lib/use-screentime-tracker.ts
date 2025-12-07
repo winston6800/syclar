@@ -3,8 +3,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { HeroRank, getInitialRank, deductPointsForUnproductiveSite, addPointsForWorkCompleted, formatRank } from "./hero-rank";
 
-// Allowance spending rate: 0.10 per 5 minutes (0.02 per minute)
-const ALLOWANCE_COST_PER_MINUTE = 0.02;
+// Allowance spending rate: 0.05 per 5 minutes (0.01 per minute)
+// (Changed to 0.01 per minute as requested)
+const ALLOWANCE_COST_PER_MINUTE = 0.01;
 
 // List of unproductive website domains (can be expanded)
 const UNPRODUCTIVE_DOMAINS = [
@@ -92,7 +93,7 @@ export const useScreentimeTracker = (options?: UseScreentimeTrackerOptions) => {
     };
   }, []);
 
-  // Track time on unproductive sites
+  // Track time on unproductive sites and award/deduct rank points
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -108,51 +109,55 @@ export const useScreentimeTracker = (options?: UseScreentimeTrackerOptions) => {
     if (isTracking && currentUrl) {
       const isUnproductive = isUnproductiveDomain(currentUrl);
 
-      if (isUnproductive) {
-        interval = setInterval(() => {
-          setTimeOnUnproductiveSite((prev) => {
-            const newSeconds = prev + 1;
-            const currentMinute = Math.floor(newSeconds / 60);
-            
-            // Sync allowance from prop (in case it changed externally)
-            if (trackedAllowance !== allowance) {
-              trackedAllowance = allowance;
-            }
-            
-            // Process every minute
-            if (currentMinute > lastMinuteProcessed) {
-              lastMinuteProcessed = currentMinute;
-              
-              // Check if we have enough allowance to protect for this minute
-              const costForMinute = ALLOWANCE_COST_PER_MINUTE;
-              const hasEnoughAllowance = trackedAllowance >= costForMinute;
-              
-              setIsProtected(hasEnoughAllowance);
-              
-              if (hasEnoughAllowance) {
-                // Spend allowance for this minute
-                trackedAllowance = Math.max(0, trackedAllowance - costForMinute);
-                if (onAllowanceChange) {
-                  onAllowanceChange(trackedAllowance);
-                }
-              } else {
-                // No allowance left, deduct rank points
-                setCurrentRank((rank) =>
-                  deductPointsForUnproductiveSite(rank, 1)
-                );
+      interval = setInterval(() => {
+        // If productive site, just reset unproductive counter; points are awarded only during Focus Mode
+        if (!isUnproductive) {
+          setTimeOnUnproductiveSite(0);
+          setIsProtected(false);
+          return;
+        }
+
+        // If unproductive, track seconds and handle allowance/minute processing
+        setTimeOnUnproductiveSite((prev) => {
+          const newSeconds = prev + 1;
+          const currentMinute = Math.floor(newSeconds / 60);
+
+          // Sync allowance from prop (in case it changed externally)
+          if (trackedAllowance !== allowance) {
+            trackedAllowance = allowance;
+          }
+
+          // Process every minute
+          if (currentMinute > lastMinuteProcessed) {
+            lastMinuteProcessed = currentMinute;
+
+            // Check if we have enough allowance to protect for this minute
+            const costForMinute = ALLOWANCE_COST_PER_MINUTE;
+            const hasEnoughAllowance = trackedAllowance >= costForMinute;
+
+            setIsProtected(hasEnoughAllowance);
+
+            if (hasEnoughAllowance) {
+              // Spend allowance for this minute
+              trackedAllowance = Math.max(0, trackedAllowance - costForMinute);
+              if (onAllowanceChange) {
+                onAllowanceChange(trackedAllowance);
               }
             } else {
-              // Update protection status based on remaining allowance
-              const costForNextMinute = ALLOWANCE_COST_PER_MINUTE;
-              setIsProtected(trackedAllowance >= costForNextMinute);
+              // No allowance left, deduct rank points (1 point per minute)
+              setCurrentRank((rank) =>
+                deductPointsForUnproductiveSite(rank, 1)
+              );
             }
-            
-            return newSeconds;
-          });
-        }, 1000);
-      } else {
-        setIsProtected(false);
-      }
+          } else {
+            // Update protection status based on remaining allowance
+            const costForNextMinute = ALLOWANCE_COST_PER_MINUTE;
+            setIsProtected(trackedAllowance >= costForNextMinute);
+          }
+
+          return newSeconds;
+        });
+      }, 1000);
     }
 
     return () => {

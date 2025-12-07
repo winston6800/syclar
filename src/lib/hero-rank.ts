@@ -40,17 +40,53 @@ export const calculateRankFromPoints = (points: number): HeroRank => {
   if (points <= floorPoints) {
     return { class: "F", number: 1000, points };
   }
-
   // Start at C class Rank #500 at 0 points
-  // Each rank change = 10 points
+  let currentRank: HeroRank = { class: "C", number: 500, points };
+
+  // If positive points, progress only when thresholds for the next rank are met.
+  if (points >= 0) {
+    // Iteratively rank up while the provided points meet the next-rank threshold
+    while (true) {
+      // If already at ceiling, stop
+      if (currentRank.class === "S" && currentRank.number === 1) break;
+
+      const threshold = getRankUpThreshold(currentRank);
+      // If the user's points meet or exceed the threshold for the next rank, advance
+      if (points >= threshold) {
+        // Advance one rank number (or class if at #1)
+        if (currentRank.number > 1) {
+          currentRank = { ...currentRank, number: currentRank.number - 1 };
+        } else {
+          const currentIndex = CLASS_ORDER.indexOf(currentRank.class);
+          if (currentIndex < CLASS_ORDER.length - 1) {
+            currentRank = {
+              class: CLASS_ORDER[currentIndex + 1],
+              number: RANKS_PER_CLASS,
+              points: currentRank.points,
+            };
+          } else {
+            // Already at top class #1
+            break;
+          }
+        }
+        // Continue looping to see if the same points push through further ranks
+        continue;
+      }
+      break;
+    }
+
+    return { ...currentRank, points };
+  }
+
+  // Negative or small positive points that don't meet thresholds: fallback to original granular model
+  // Calculate rankOffset using the simpler points-per-rank rule for downward movement
   const rankOffset = Math.floor((points - 0) / POINTS_PER_RANK_DOWN);
-  
+
   let currentClass: RankClass = "C";
   let currentNumber = 500;
-  
-  // Adjust rank based on offset
+
   if (rankOffset > 0) {
-    // Going up (positive points)
+    // Shouldn't hit this often because positive progression is handled above, but keep parity
     let remaining = rankOffset;
     while (remaining > 0 && (currentClass !== "S" || currentNumber !== 1)) {
       if (currentNumber > 1) {
@@ -82,17 +118,17 @@ export const calculateRankFromPoints = (points: number): HeroRank => {
       }
     }
   }
-  
+
   // Ensure we don't go below floor
   if (currentClass === "F" && currentNumber > 1000) {
     currentNumber = 1000;
   }
-  
+
   // Ensure we don't go above ceiling
   if (currentClass === "S" && currentNumber < 1) {
     currentNumber = 1;
   }
-  
+
   return { class: currentClass, number: currentNumber, points };
 };
 
@@ -150,6 +186,8 @@ export const getRankUpInfo = (currentRank: HeroRank): {
   canRankUp: boolean;
   pointsNeeded: number;
   nextRank: HeroRank | null;
+  threshold?: number;
+  progress?: number; // 0-1 progress toward next rank
 } => {
   // Can't rank up if at ceiling
   if (currentRank.class === "S" && currentRank.number === 1) {
@@ -182,6 +220,8 @@ export const getRankUpInfo = (currentRank: HeroRank): {
     canRankUp: currentRank.points >= threshold,
     pointsNeeded: Math.max(0, pointsNeeded),
     nextRank,
+    threshold: isFinite(threshold) ? threshold : undefined,
+    progress: isFinite(threshold) ? Math.max(0, Math.min(1, currentRank.points / threshold)) : 0,
   };
 };
 

@@ -64,3 +64,9 @@
 - Includes a start/pause timer for the active goal and a button to mark it "Done".
 - Below, a short history list of today's completed goals with timestamps.
 - If there is no active goal, page prompts: "Get next goal" and pulls from the Strategy/Operations pool (next unplaced stone).
+
+## Recent additions
+
+- Stone→Task: click/drag stone creates task; max 1 in-progress.
+- Allowance: 0.01/min deducted on unproductive sites.
+- Rank points: +1/sec productive; -1/min when unprotected on unproductive sites.

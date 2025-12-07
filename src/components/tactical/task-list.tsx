@@ -17,9 +17,10 @@ type TaskListProps = {
   onResumeFocus: () => void;
   onStopFocus: () => void;
   onRemove: (taskId: string) => void;
-  onBreakDown: (taskId: string, taskLabel: string) => void;
+  // AI breakdown removed
   onToggleSubtask: (taskId: string, subtaskId: string) => void;
   onAddSubtask: (taskId: string, subtaskLabel: string) => void;
+  onRemoveSubtask: (taskId: string, subtaskId: string) => void;
   formatTime: (seconds: number) => string;
   formatMinutes: (minutes: number) => string;
 };
@@ -37,9 +38,10 @@ export function TaskList({
   onResumeFocus,
   onStopFocus,
   onRemove,
-  onBreakDown,
+  // onBreakDown removed
   onToggleSubtask,
   onAddSubtask,
+  // onRemoveSubtask removed (component deprecated, use MomentumTimer instead)
   formatTime,
   formatMinutes,
 }: TaskListProps) {
@@ -97,9 +99,10 @@ export function TaskList({
             onResumeFocus={onResumeFocus}
             onStopFocus={onStopFocus}
             onRemove={() => onRemove(task.id)}
-            onBreakDown={() => onBreakDown(task.id, task.label)}
+            /* AI breakdown disabled */
             onToggleSubtask={(subtaskId) => onToggleSubtask(task.id, subtaskId)}
             onAddSubtask={(subtaskLabel) => onAddSubtask(task.id, subtaskLabel)}
+            // onRemoveSubtask removed (component deprecated)
             formatTime={formatTime}
             formatMinutes={formatMinutes}
           />

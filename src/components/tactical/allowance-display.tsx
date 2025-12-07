@@ -64,7 +64,7 @@ export function AllowanceDisplay({ allowance, goodwill, isProtected = false }: A
               ? "text-blue-600 dark:text-blue-400" 
               : "text-neutral-700 dark:text-neutral-300"
           }`}>
-            {goodwill}
+            {goodwill.toFixed(2)}
           </div>
         </div>
 

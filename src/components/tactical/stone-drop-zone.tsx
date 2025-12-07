@@ -6,14 +6,12 @@ import type { Task, Stone } from "./types";
 type StoneDropZoneProps = {
   availableStones: Stone[];
   onDrop: (task: Task) => void;
-  onBreakDown: (taskId: string, taskLabel: string) => Promise<void>;
   onStartFocus: (taskId: string) => void;
 };
 
 export function StoneDropZone({
   availableStones,
   onDrop,
-  onBreakDown,
   onStartFocus,
 }: StoneDropZoneProps) {
   const [isDraggingOver, setIsDraggingOver] = useState(false);
@@ -25,24 +23,13 @@ export function StoneDropZone({
     try {
       const stoneData = JSON.parse(e.dataTransfer.getData("application/json"));
 
-      // Create task from stone
-      const newTask: Task = {
-        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        label: stoneData.name,
-        subtasks: [],
-        completed: false,
-        timeSpent: 0,
-      };
-
-      onDrop(newTask);
-
-      // Auto-break down with AI
-      await onBreakDown(newTask.id, stoneData.name);
-
-      // Auto-start focus session
-      setTimeout(() => {
-        onStartFocus(newTask.id);
-      }, 100);
+      // Auto-creation from stones disabled — instruct user to create tasks manually
+      try {
+        // Optionally we could add a toast here; for now we just log
+        console.info("Dropped stone: AI/auto-create disabled. Create tasks manually in Tactical.");
+      } catch (e) {
+        console.error(e);
+      }
     } catch (error) {
       console.error("Failed to handle drop:", error);
     }
@@ -88,6 +75,21 @@ export function StoneDropZone({
                   key={stone.id}
                   type="button"
                   onClick={() => {
+                    // Prevent starting another stone if one is already in progress
+                    try {
+                      const saved = localStorage.getItem("strategyStones");
+                      if (saved) {
+                        const all = JSON.parse(saved);
+                        const active = all.find((s: any) => s.inProgress);
+                        if (active) {
+                          alert("You already have a stone in progress. Finish or stop it before starting another.");
+                          return;
+                        }
+                      }
+                    } catch (e) {
+                      // ignore parse errors
+                    }
+
                     // Store stone to trigger the pending stone handler
                     localStorage.setItem("pendingStone", JSON.stringify(stone));
                   }}

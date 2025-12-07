@@ -11,15 +11,19 @@ type MilestoneItemProps = {
 
 export function MilestoneItem({ stone, onClick, onRemove }: MilestoneItemProps) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={stone.completed}
+    <div
+      role="button"
+      tabIndex={stone.completed ? -1 : 0}
+      onClick={() => {
+        if (stone.completed) return;
+        onClick();
+      }}
       className={`group/stone flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-left transition-all ${
         stone.completed
           ? "border-green-200 bg-green-50/50 dark:border-green-900/30 dark:bg-green-950/20 cursor-default"
           : "border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950/50 dark:hover:border-neutral-700 dark:hover:bg-neutral-900/50 cursor-pointer"
       }`}
+      aria-disabled={stone.completed}
     >
       <div className="flex flex-1 items-center gap-3">
         <div
@@ -57,7 +61,7 @@ export function MilestoneItem({ stone, onClick, onRemove }: MilestoneItemProps) 
       >
         <X className="h-3.5 w-3.5" />
       </button>
-    </button>
+    </div>
   );
 }
 
