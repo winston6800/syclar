@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { useScreentimeTracker } from "@/lib/use-screentime-tracker";
 import { recordFocusTime } from "@/lib/stats";
-import { GamificationPanel } from "@/components/gamification-panel";
+import { DailyStoryCard } from "@/components/story/daily-story-card";
+import { StoryArchive } from "@/components/story/story-archive";
 import type { FocusSession } from "@/components/tactical/types";
 import { DailyAccomplishment } from "@/components/tactical/daily-accomplishment";
 import { AccomplishmentCalendar } from "@/components/tactical/accomplishment-calendar";
@@ -22,6 +23,28 @@ export default function TacticalPage() {
   const [allowance, setAllowance] = useState(0);
   const [goodwill, setGoodwill] = useState(0);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
+  const [stories, setStories] = useState<any[]>([]);
+  const [isLoadingStories, setIsLoadingStories] = useState(true);
+
+  useEffect(() => {
+    // Load stories from localStorage
+    const savedStories = localStorage.getItem("dailyStories");
+    if (savedStories) {
+      try {
+        setStories(JSON.parse(savedStories));
+      } catch (e) {
+        console.error("Failed to parse stories", e);
+      }
+    }
+    setIsLoadingStories(false);
+  }, []);
+
+  const handleStorySubmit = (newStory: any) => {
+    const updatedStories = [newStory, ...stories];
+    setStories(updatedStories);
+    localStorage.setItem("dailyStories", JSON.stringify(updatedStories));
+  };
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -160,9 +183,14 @@ export default function TacticalPage() {
             />
           </div>
 
-          {/* Gamification Panel */}
+          {/* Stories - moved under Momentum Timer */}
           <div className="mt-12">
-            <GamificationPanel />
+            <div className="mb-16">
+              <DailyStoryCard onSubmit={handleStorySubmit} />
+            </div>
+            <div>
+              {!isLoadingStories && <StoryArchive stories={stories} />}
+            </div>
           </div>
         </div>
       </div>
