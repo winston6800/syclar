@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     // Store as JSON string under a key scoped to the clientId
     const key = `accomplishments:${clientId}`;
     try {
-      await redis.set(key, JSON.stringify(accomplishments));
+      await redis.set?.(key, JSON.stringify(accomplishments));
     } catch (err) {
       console.error("Redis error saving accomplishments:", err);
       // Don't fail hard — return success:false so client can fallback
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
     }
     const key = `accomplishments:${clientId}`;
     try {
-      const data = await redis.get(key);
+      const data = await redis.get?.(key);
       if (!data) return NextResponse.json({ success: true, accomplishments: {} });
       const parsed = JSON.parse(data as string);
       return NextResponse.json({ success: true, accomplishments: parsed });
@@ -48,3 +48,5 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: false, error: "Server error" }, { status: 500 });
   }
 }
+
+

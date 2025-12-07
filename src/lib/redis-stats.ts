@@ -10,11 +10,11 @@ const AGGREGATED_KEY = "aggregated_stats";
 export async function storeUserStats(stats: UserStats): Promise<void> {
   try {
     await redis.hset(`${STATS_KEY}:${stats.userId}`, {
-      totalCycles: stats.totalCycles,
-      totalFocusMinutes: stats.totalFocusMinutes,
-      totalTasksCompleted: stats.totalTasksCompleted,
-      currentStreak: stats.currentStreak,
-      longestStreak: stats.longestStreak,
+      totalCycles: String(stats.totalCycles),
+      totalFocusMinutes: String(stats.totalFocusMinutes),
+      totalTasksCompleted: String(stats.totalTasksCompleted),
+      currentStreak: String(stats.currentStreak),
+      longestStreak: String(stats.longestStreak),
       lastActivityDate: stats.lastActivityDate,
       createdAt: stats.createdAt,
     });
@@ -156,7 +156,7 @@ function getDefaultAggregatedStats(): AggregatedStats {
 // Cache aggregated stats (update every 5 minutes)
 export async function getCachedAggregatedStats(): Promise<AggregatedStats> {
   try {
-    const cached = await redis.get(AGGREGATED_KEY);
+    const cached = await redis.get?.(AGGREGATED_KEY);
     if (cached) {
       return JSON.parse(cached as string);
     }
@@ -164,7 +164,7 @@ export async function getCachedAggregatedStats(): Promise<AggregatedStats> {
     // Calculate and cache
     const stats = await calculateAggregatedStats();
     try {
-      await redis.setex(AGGREGATED_KEY, 300, JSON.stringify(stats)); // 5 min cache
+      await redis.setex?.(AGGREGATED_KEY, 300, JSON.stringify(stats)); // 5 min cache
     } catch (cacheError) {
       // If caching fails, still return the calculated stats
       console.debug("Could not cache aggregated stats (Redis unavailable)");

@@ -20,7 +20,9 @@ type RedisLike = {
   hset: (key: string, obj: Record<string, string>) => Promise<void>;
   hgetall: (key: string) => Promise<Record<string, string>>;
   get?: (key: string) => Promise<string | null>;
+  set?: (key: string, value: string) => Promise<void>;
   setex?: (key: string, seconds: number, value: string) => Promise<void>;
+  del?: (key: string) => Promise<number>;
 };
 
 // In-memory fallback implementation
@@ -71,6 +73,12 @@ const createInMemoryRedis = (): RedisLike => {
       hashes.set(key, value as unknown as Record<string, string>);
       // ignore expiration in fallback
     },
+    async del(key) {
+      // delete from both sets and hashes
+      const setDeleted = sets.delete(key) ? 1 : 0;
+      const hashDeleted = hashes.delete(key) ? 1 : 0;
+      return setDeleted || hashDeleted;
+    },
   };
 };
 
@@ -103,7 +111,7 @@ export async function addToWaitlist(email: string): Promise<boolean> {
     return true;
   } catch (error) {
     if (isConnectionError(error)) {
-      console.warn("Upstash connection error (waitlist add):", error?.message || error);
+      console.warn("Upstash connection error (waitlist add):", (error as any)?.message || error);
     } else {
       console.error("Error adding email to waitlist:", error);
     }
@@ -117,7 +125,7 @@ export async function getWaitlistCount(): Promise<number> {
     return (count as number) || 0;
   } catch (error) {
     if (isConnectionError(error)) {
-      console.warn("Upstash connection error (getWaitlistCount):", error?.message || error);
+      console.warn("Upstash connection error (getWaitlistCount):", (error as any)?.message || error);
     } else {
       console.error("Error getting waitlist count:", error);
     }
@@ -149,7 +157,7 @@ export async function getAllWaitlistEmails(): Promise<
     });
   } catch (error) {
     if (isConnectionError(error)) {
-      console.warn("Upstash connection error (getAllWaitlistEmails):", error?.message || error);
+      console.warn("Upstash connection error (getAllWaitlistEmails):", (error as any)?.message || error);
     } else {
       console.error("Error getting all waitlist emails:", error);
     }

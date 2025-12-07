@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       // Invalidate aggregated stats cache
       const { redis } = await import("@/lib/redis");
       try {
-        await redis.del("aggregated_stats");
+        await redis.del?.("aggregated_stats");
       } catch (cacheError) {
         // Silently fail cache invalidation
         console.debug("Could not invalidate cache (Redis unavailable)");
