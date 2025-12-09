@@ -20,7 +20,14 @@ export default function TacticalPage() {
     elapsedSeconds: 0,
     isRunning: false,
   });
-  const [allowance, setAllowance] = useState(0);
+  const [allowance, setAllowance] = useState<number>(() => {
+    try {
+      const raw = localStorage.getItem("allowance");
+      return raw ? Number(raw) : 0;
+    } catch (e) {
+      return 0;
+    }
+  });
   const [goodwill, setGoodwill] = useState(0);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
@@ -45,6 +52,15 @@ export default function TacticalPage() {
     setStories(updatedStories);
     localStorage.setItem("dailyStories", JSON.stringify(updatedStories));
   };
+
+  // Persist allowance so it survives reloads
+  useEffect(() => {
+    try {
+      localStorage.setItem("allowance", String(allowance));
+    } catch (e) {
+      // ignore storage errors (e.g. privacy mode)
+    }
+  }, [allowance]);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
